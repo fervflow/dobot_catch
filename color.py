@@ -1,9 +1,6 @@
 import cv2 as cv
 import numpy as np
 
-cap = cv.VideoCapture('./video.mp4')
-# cap = cv.VideoCapture(0)
-
 RED = [(136, 87, 111), (180, 255, 255)]
 GREEN = [(25, 52, 72), (102, 255, 255)]
 BLUE = [(94, 80, 2), (120, 255, 255)]
@@ -41,37 +38,49 @@ def draw_objects(frame, coordinates, label_color):
         cv.rectangle(frame, (x, y), (x+w, y+h), RGB[label_color], 2)
         cv.putText(frame, label_color, (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 1, RGB[label_color], 2)
 
-frame_count = -1
-frame_interval = 10
 
-last_blue_coords = []
-last_red_coords = []
-last_green_coords = []
+def main_loop(callback=None):
+    cap = cv.VideoCapture('./video.mp4')
+    # cap = cv.VideoCapture(0)
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-    
-    frame_count += 1
-    if frame_count % frame_interval == 0:
-        hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+    frame_count = -1
+    frame_interval = 10
+
+    last_blue_coords = []
+    last_red_coords = []
+    last_green_coords = []
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
         
-        last_red_coords = detect_color(hsv_frame, RED)
-        last_green_coords = detect_color(hsv_frame, GREEN)
-        last_blue_coords = detect_color(hsv_frame, BLUE)
+        frame_count += 1
+        if frame_count % frame_interval == 0:
+            hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+            
+            last_red_coords = detect_color(hsv_frame, RED)
+            last_green_coords = detect_color(hsv_frame, GREEN)
+            last_blue_coords = detect_color(hsv_frame, BLUE)
+            
+            if last_blue_coords:
+                print(f"Blue object coordinates: {last_blue_coords}")
+
+        draw_objects(frame, last_red_coords, 'red')
+        draw_objects(frame, last_green_coords, 'green')
+        draw_objects(frame, last_blue_coords, 'blue')
+
+        cv.imshow("Original", frame)
         
-        if last_blue_coords:
-            print(f"Blue object coordinates: {last_blue_coords}")
+        if cv.waitKey(1) == ord('s'):
+            if last_blue_coords and callback:
+                callback(last_blue_coords[-1])
 
-    draw_objects(frame, last_red_coords, 'red')
-    draw_objects(frame, last_green_coords, 'green')
-    draw_objects(frame, last_blue_coords, 'blue')
+        if cv.waitKey(27) & 0xFF == ord('q'):
+            break
 
-    cv.imshow("Original", frame)
+    cap.release()
+    cv.destroyAllWindows()
 
-    if cv.waitKey(27) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv.destroyAllWindows()
+if __name__ == "__main__":
+    main_loop()
