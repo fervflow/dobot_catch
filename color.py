@@ -9,6 +9,9 @@ RGB = {
     'red': (0, 0, 255),
     'green': (0, 255, 0),
     'blue': (255, 0, 0),
+    # 'red': (255, 0, 0),
+    # 'green': (0, 255, 0),
+    # 'blue': (0, 0, 255),
 }
 
 def detect_color(hsv_frame, color_bounds):
@@ -51,12 +54,15 @@ def main_loop(callback=None):
     last_green_coords = []
 
     while True:
-        ret, frame = cap.read()
+        ret, frame_original = cap.read()
         if not ret:
             break
         
+        frame = frame_original[150:340, 120:600]
         frame_count += 1
         if frame_count % frame_interval == 0:
+            # rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+            # hsv_frame = cv.cvtColor(rgb_frame, cv.COLOR_RGB2HSV)
             hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
             
             last_red_coords = detect_color(hsv_frame, RED)
@@ -72,7 +78,7 @@ def main_loop(callback=None):
 
         cv.imshow("Original", frame)
         
-        if cv.waitKey(1) == ord('s'):
+        if cv.waitKey(1) == ord('b'):
             if last_blue_coords and callback:
                 callback(last_blue_coords[-1])
 
@@ -84,3 +90,4 @@ def main_loop(callback=None):
 
 if __name__ == "__main__":
     main_loop()
+    

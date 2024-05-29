@@ -1,6 +1,8 @@
 import threading
 import dobot
 import color
+import cv2 as cv
+import numpy as np
 
 class CoordHandler:
     def __init__(self):
@@ -11,20 +13,27 @@ class CoordHandler:
 
     def get_coords(self):
         return self.last_coords
+    
+def translate_coords(x, y, homography_matrix):
+    # Point in the webcam frame
+    webcam_point = np.array([[x, y]], dtype=np.float32)
+    webcam_point = np.array([webcam_point])
+
+    # Transform the point using the homography matrix
+    dobot_point = cv.perspectiveTransform(webcam_point, homography_matrix)
+
+    return dobot_point[0][0][0], dobot_point[0][0][1]
 
 def main():
     # Initialize Dobot
     dobot_arm = dobot.initialize_dobot()
     dobot.print_position(dobot_arm)
 
-    # Coordinate destinations (you can adjust these as needed)
     coords = [
         (0, 0),  # Placeholder for origin (x, y)
         (180, -200)  # Destination (x, y)
     ]
-    # 181, 78
-    # 240, 187
-    # -59, -109
+    
     coord_handler = CoordHandler()
 
     # Start the video feed in a separate thread
@@ -39,7 +48,7 @@ def main():
                 coords[0] = (last_coords_x, last_coords_y)
                 print()
                 dobot.agarrar_objeto(dobot_arm, coords[0], coords[1], 0)
-                coord_handler.set_coords(None)  # Reset after processing
+                coord_handler.set_coords(None)
     except KeyboardInterrupt:
         print("Exiting...")
     finally:
