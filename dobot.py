@@ -51,13 +51,13 @@ def agarrar_objeto(dobot, origin, destiny, r):
 
         # Llevar al destino, abrir garra y elevar brazo
         dobot.move_to(destiny[0], destiny[1], Z_LIMIT[1], r, wait=True)
-        dobot.move_to(destiny[0], destiny[1], Z_LIMIT[0], r, wait=True)
+        #dobot.move_to(destiny[0], destiny[1], Z_LIMIT[0], r, wait=True)
         dobot.grip(False)
         dobot.wait(500)
         dobot.move_to(destiny[0], destiny[1], Z_LIMIT[1], r, wait=True)
         
         # Llevar al origen (dobot) y cerrar garra
-        dobot.move_to(120, 0, 0, 0, wait=True)
+        # dobot.move_to(120, 0, 0, 0, wait=True)
         dobot.grip(True)
         
         # Apagar compresor
