@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+from Tracker.tracker import Tracker
 
 BLUE = [(94, 80, 2), (120, 255, 255)]
 GREEN = [(25, 52, 72), (102, 255, 255)]
@@ -32,56 +33,68 @@ def detect_color(hsv_frame, color_bounds):
 
     return coordinates
 
-def draw_objects(frame, coordinates, label_color):
+def draw_contours(frame, coordinates, label_color):
     for coordinate in coordinates:
         x, y, w, h, _, _ = coordinate
         cv.rectangle(frame, (x, y), (x+w, y+h), BGR[label_color], 2)
         cv.putText(frame, label_color, (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 1, BGR[label_color], 2)
 
 
-def main_loop(callback=None):
+def main_loop():
+    tracker = Tracker(video_source='./video.mp4')
+    
     # cap = cv.VideoCapture('./video.mp4')
-    cap = cv.VideoCapture(0)
+    # cap = cv.VideoCapture(0)
 
     frame_count = -1
     frame_interval = 24
 
-    last_blue_coords = []
-    last_red_coords = []
-    last_green_coords = []
+    # blue_coords = []
+    # red_coords = []
+    # green_coords = []
 
     while True:
-        ret, frame_original = cap.read()
+        ret, frame = tracker.cap.read()
         if not ret:
             break
         
+        frame, box_ids = tracker.process_frame(frame)
         # frame cropped to fit controlled environment
-        frame = frame_original[150:340, 120:600]
-        frame_count += 1
-        if frame_count % frame_interval == 0:
-            hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-            last_blue_coords = detect_color(hsv_frame, BLUE)
-            last_green_coords = detect_color(hsv_frame, GREEN)
-            last_red_coords = detect_color(hsv_frame, RED)
+        # frame = frame_original[150:340, 120:600]
+        # frame_count += 1
+        # if frame_count % frame_interval == 0:
+        hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        blue_coords = detect_color(hsv_frame, BLUE)
+        green_coords = detect_color(hsv_frame, GREEN)
+        red_coords = detect_color(hsv_frame, RED)
             
-            if last_blue_coords:
-                print(f"Blue object coordinates: {last_blue_coords}")
+            # if blue_coords:
+            #     print(f"Blue object coordinates: {blue_coords}")
+            
+        for box in box_ids:
+            x, y, w, h, id = box
+            # Check if the tracked object is within a colored area
+            for coords in [blue_coords, green_coords, red_coords]:
+                for (cx, cy, _, _, x_center, y_center) in coords:
+                    if x < x_center < x + w and y < y_center < y + h:
+                        color_label = "blue" if coords == blue_coords else "green" if coords == green_coords else "red"
+                        cv.putText(frame, f'ID {id} {color_label}', (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 1, BGR[color_label], 2)
 
-        draw_objects(frame, last_blue_coords, 'blue')
-        draw_objects(frame, last_green_coords, 'green')
-        draw_objects(frame, last_red_coords, 'red')
+        draw_contours(frame, blue_coords, 'blue')
+        draw_contours(frame, green_coords, 'green')
+        draw_contours(frame, red_coords, 'red')
 
         cv.imshow("Original", frame)
         
-        if cv.waitKey(1) == ord('b'):
-            if last_blue_coords and callback:
-                callback(last_blue_coords[-1])
+        # if cv.waitKey(1) == ord('b'):
+        #     if blue_coords and callback:
+        #         callback(blue_coords[-1])
 
         if cv.waitKey(20) & 0xFF == ord('q'):
             break
 
-    cap.release()
-    cv.destroyAllWindows()
+    tracker.release()
+    # cv.destroyAllWindows()
 
 if __name__ == "__main__":
     main_loop()
