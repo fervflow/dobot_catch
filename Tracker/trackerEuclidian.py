@@ -1,11 +1,9 @@
 import math
 
-
 class EuclideanDistTracker:
     def __init__(self):
         self.center_points = {}
         self.id_count = 0
-
 
     def update(self, objects_rect):
         objects_bbs_ids = []
@@ -39,6 +37,3 @@ class EuclideanDistTracker:
         # actualizar
         self.center_points = new_center_points.copy()
         return objects_bbs_ids
-
-
-
